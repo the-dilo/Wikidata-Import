@@ -42,6 +42,9 @@ Use the following script to create the database and a table
         CREATE DATABASE Wikidata
         GO
         
+        use Wikidata
+        GO
+        
         CREATE TABLE [dbo].[Documents](
             [Id] [varchar](100) NOT NULL,
             [Type] [varchar](100) NOT NULL,
@@ -78,6 +81,39 @@ which imports the first 2K items. If you want to load everything use
 
 Note that a parallel import is probably faster but that some congestion can occur and you need to deal with blocks.     
 
+## Properties
 
+The property definitions are not part of the filtered dataset and can be downloaded or extracted via the [wikidata-properties-dumpter](https://github.com/maxlath/wikidata-properties-dumper) project.
 
+Direct download of [the English set](https://github.com/maxlath/wikidata-properties-dumper/blob/master/properties/en.json) and [the Dutch set](https://github.com/maxlath/wikidata-properties-dumper/blob/master/properties/nl.json).
+
+Create a new table in the Wikidate db
+
+        use Wikidata
+        GO
+
+        CREATE TABLE [dbo].[Properties](
+            [Id] [varchar](100) NOT NULL,
+            [EN] [nvarchar](1000) NULL,
+            [NL] [nvarchar](1000) NULL,
+            CONSTRAINT [PK_Properties] PRIMARY KEY CLUSTERED 
+            (
+                [Id] ASC
+            )
+        ) ON [PRIMARY]
+        GO
+
+Execute the script
+
+        node importProps.js
+
+and the props will be in the newly created table (in English and Dutch).
+
+With this in place you can fetch the claims of a particular topic (below Q803, being 'Utrecht') in one go like so
+
+        with cte(Claims)
+        as(select [value] as Claims from [Documents] B cross apply OpenJson(B.Document) where B.Id = 'Q803' and [key] = 'claims'),
+        kv(k,v)
+        as(select O.[key] k, O.[value] v from cte cross apply openjson(cte.Claims) O)
+        select P.en, P.nl, k as id ,v as [values] from kv inner join [Properties] P on P.Id = k  COLLATE SQL_Latin1_General_CP1_CI_AS
 
