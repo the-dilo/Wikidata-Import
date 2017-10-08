@@ -23,7 +23,7 @@ for (let id in dutch) {
 
 const sql = require('mssql')
 
-new sql.ConnectionPool('mssql://sa:Euler=27182@localhost/Wikidata').connect().then(pool => {
+new sql.ConnectionPool('mssql://username:passwerd@localhost/Wikidata').connect().then(pool => {
 
     for (let id in result) {
         const request = new sql.Request(pool);
